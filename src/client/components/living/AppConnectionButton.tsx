@@ -1,0 +1,254 @@
+import { useEffect, useId, useRef, useState } from "react";
+import { activateClient, isClientActivated, watchClientActivation } from "../../lib/session";
+import { useProjectLink } from "../../lib/use-project-link";
+import { useCopy } from "../../ui/copy";
+import { Glyph } from "../../ui/icons";
+import { Tooltip } from "./Tooltip";
+import { Comic } from "./Comic";
+import { HintComic } from "./hints";
+import { LoadingStatus } from "./WaitingStatus";
+import { useAnchoredPopover } from "./use-anchored-popover";
+import { androidAppIntent } from "../../native/activation";
+import type { AppReleaseIdentity } from "../../lib/release-update";
+import { useReleaseUpdate } from "../../lib/use-release-update";
+import { AppReleaseNotice } from "./AppReleaseNotice";
+
+interface AppConnectionProps {
+  onConnected?: () => void;
+}
+
+interface ConnectionAttempt {
+  controller: AbortController;
+  popup: Window | null;
+  open?: () => void;
+  cancel?: () => void;
+}
+
+export function AppConnectionButton({ onConnected }: AppConnectionProps) {
+  const { t, vis } = useCopy();
+  const [state, setState] = useState<"idle" | "waking" | "busy" | "approval" | "approving" | "ready" | "unavailable" | "incompatible">("idle");
+  const wakeURL = androidAppIntent("piik://app");
+  const [helpOpen, setHelpOpen] = useState(false);
+  const downloadURL = useProjectLink("/#download", "https://github.com/TNTcraftHIM/Piik/releases/latest", helpOpen);
+  const helpId = useId();
+  const trigger = useRef<HTMLButtonElement>(null);
+  const help = useRef<HTMLDivElement>(null);
+  useAnchoredPopover(trigger, help);
+  const pending = useRef<ConnectionAttempt | null>(null);
+  const healthCheck = useRef<AbortController | null>(null);
+  const [build, setBuild] = useState<AppReleaseIdentity>();
+  const { update: release, refresh: checkRelease } = useReleaseUpdate(build);
+  function rememberBuild(health: Partial<AppReleaseIdentity> | null) {
+    setBuild(health?.version && health.revision
+      ? { version: health.version, revision: health.revision, packageTarget: health.packageTarget } : undefined);
+  }
+  useEffect(() => {
+    const refresh = async () => {
+      if (pending.current || help.current?.matches(":popover-open") || !isClientActivated()) return;
+      healthCheck.current?.abort();
+      const current = healthCheck.current = new AbortController();
+      const native = await import("../../native/client");
+      if (current.signal.aborted) return;
+      try {
+        const health = await native.discoverNativeHealth({ signal: current.signal, waitForPermission: false });
+        if (!current.signal.aborted && !pending.current) {
+          rememberBuild(health);
+          setState(health ? "ready" : "idle");
+        }
+      } catch (error) {
+        if (!current.signal.aborted && !pending.current) {
+          rememberBuild(null);
+          setState(error instanceof native.NativeCompatibilityError ? "incompatible" : "idle");
+        }
+      }
+    };
+    // Launch/remembered activation is intent, not proof of current permission.
+    // Recheck on return without keeping a media session or a polling timer alive.
+    const onFocus = () => { void refresh().catch(() => undefined); };
+    onFocus();
+    window.addEventListener("focus", onFocus);
+    const unwatch = watchClientActivation(onFocus);
+    return () => { healthCheck.current?.abort(); window.removeEventListener("focus", onFocus); unwatch(); };
+  }, []);
+  useEffect(() => () => { pending.current?.controller.abort(); pending.current?.popup?.close(); }, []);
+
+  function showHelp(): void {
+    if (trigger.current) help.current?.showPopover({ source: trigger.current });
+  }
+
+  async function connect(wake = false): Promise<void> {
+    if (pending.current) { pending.current.open?.(); return; }
+    let manage = state === "ready";
+    healthCheck.current?.abort();
+    // Discovery and its browser permission prompt stay in the current tab.
+    // A fresh click opens the real approval page without reserving a blank tab.
+    const attempt: ConnectionAttempt = { controller: new AbortController(), popup: null };
+    pending.current = attempt;
+    showHelp();
+    const signal = attempt.controller.signal;
+    let native: typeof import("../../native/client") | undefined;
+    let approving = false;
+    let waking = false;
+    const verifyApproval = async (reported = false) => {
+      if (approving || signal.aborted) return;
+      approving = true;
+      const health = await native?.discoverNativeHealth({ signal, ...(manage ? { waitForPermission: false } : {}) }).catch(() => null);
+      if (signal.aborted) return;
+      approving = false;
+      if (manage) {
+        rememberBuild(health ?? null);
+        if (!health) finish("idle");
+        return;
+      }
+      if (health) {
+        rememberBuild(health);
+        finish("ready");
+        activateClient();
+        onConnected?.();
+      } else if (reported) finish("unavailable");
+      else if (attempt.popup?.closed) finish("idle");
+    };
+    const onMessage = (event: MessageEvent) => {
+      if (!attempt.popup || event.source !== attempt.popup || !approvalOrigin || event.origin !== approvalOrigin ||
+          event.data?.type !== "piik-app-approved" || event.data.site !== window.location.origin) return;
+      // A message or browser return asks us to verify App-owned permission.
+      void verifyApproval(true);
+    };
+    let approvalOrigin = "";
+    const finish = (result: typeof state, keepPage = false) => {
+      window.removeEventListener("message", onMessage);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+      attempt.controller.abort();
+      if (!keepPage) attempt.popup?.close();
+      if (pending.current === attempt) {
+        pending.current = null;
+        setState(result);
+        if (result === "unavailable" || result === "incompatible") showHelp();
+        else help.current?.hidePopover();
+      }
+    };
+    attempt.cancel = () => finish(manage ? "ready" : "idle");
+    const onFocus = () => {
+      if (waking) { attempt.open?.(); return; }
+      if (attempt.popup || manage) void verifyApproval();
+    };
+    const onVisible = () => { if (document.visibilityState === "visible") onFocus(); };
+    window.addEventListener("message", onMessage);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    signal.addEventListener("abort", () => {
+      window.removeEventListener("message", onMessage);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    }, { once: true });
+    const discover = async () => {
+      setState("busy");
+      try {
+        native = await import("../../native/client");
+        if (signal.aborted) return;
+        const url = await native.discoverNativeConnect(signal);
+        if (signal.aborted) return;
+        if (!url) { finish("unavailable"); return; }
+        const health = await native.discoverNativeHealth({ signal, waitForPermission: false });
+        if (signal.aborted) return;
+        rememberBuild(health);
+        manage = manage && health !== null;
+        if (health && !manage) {
+          finish("ready");
+          activateClient();
+          onConnected?.();
+          return;
+        }
+        approvalOrigin = new URL(url).origin;
+        attempt.open = () => {
+          if (signal.aborted || attempt.popup) return;
+          const destination = new URL(url);
+          if (manage) destination.searchParams.delete("site");
+          attempt.popup = window.open(destination.href, "_blank");
+          if (!attempt.popup) { finish("unavailable"); return; }
+          attempt.open = undefined;
+          if (manage) finish("ready", true);
+          else { setState("approving"); help.current?.hidePopover(); }
+        };
+        setState(manage ? "ready" : "approval");
+      } catch (error) {
+        if (!signal.aborted) finish(native && error instanceof native.NativeCompatibilityError ? "incompatible" : "unavailable");
+      }
+    };
+    if (wake && wakeURL) {
+      waking = true;
+      attempt.open = () => {
+        if (!waking || signal.aborted) return;
+        waking = false;
+        attempt.open = undefined;
+        void discover();
+      };
+      setState("waking");
+      window.location.assign(wakeURL);
+    } else await discover();
+  }
+
+  const busy = state === "busy" || state === "waking" || state === "approving";
+  const label = t(state === "busy" ? "client.connect.discovering" : state === "approving" ? "client.connect.approving" : state === "approval" ? "client.connect.found" :
+    state === "waking" ? "client.connect.returnToBrowser" : state === "ready" ? "client.connect.manage" : state === "incompatible" ? "native.incompatible" :
+    state === "unavailable" ? "client.connect.unavailable" : "client.connect.action");
+  const failed = state === "unavailable" || state === "incompatible";
+  const update = state === "ready" ? release : null;
+  const availableUpdate = update?.kind === "update-available" || update?.kind === "major-update";
+  const title = availableUpdate ? t("client.connect.update", { current: build!.version, version: update.version }) : label;
+  return <><Tooltip kind={availableUpdate ? "update-available" : state === "ready" ? "hint-app-ready" : state === "unavailable" ? "signal-failed" : state === "incompatible" ? "warning" : "hint-client-site"}
+    text={vis ? undefined : state === "idle" ? t("client.connect.hint") : title} disabled={helpOpen}
+    place="below" align="end">
+    <button ref={trigger} type="button" className={`lr-btn is-compact lr-app-connect${state === "ready" ? " is-ready" : ""}`}
+      aria-label={title} aria-busy={busy || undefined} data-update={availableUpdate || undefined}
+      popoverTarget={failed || state === "approval" ? helpId : undefined} aria-haspopup="dialog"
+      onClick={failed || state === "approval" ? undefined : event => {
+        // Failure may attach popoverTarget during this click; do not toggle the
+        // recovery card closed immediately after opening it.
+        event.preventDefault();
+        checkRelease();
+        void connect();
+      }} disabled={busy}>
+      <Glyph name={availableUpdate ? "arrowUp" : state === "ready" ? "check" : busy ? "loader" : state === "unavailable" || state === "incompatible" ? "alert" : "window"}
+        size={16} className={busy ? "lr-spin" : undefined} />
+      {vis ? null : <span className="lr-cap">App</span>}
+    </button>
+  </Tooltip>
+    <div ref={help} id={helpId} popover="auto" role="dialog" aria-label={t("client.connect.action")} aria-describedby={`${helpId}-message`}
+      className="lr-anchored-card lr-app-connect-help" onToggle={event => {
+        setHelpOpen(event.newState === "open");
+        if (event.newState === "closed" && !pending.current?.popup) pending.current?.cancel?.();
+        if (event.newState !== "open" || !trigger.current) return;
+        event.currentTarget.querySelector<HTMLButtonElement>("button")?.focus();
+      }}>
+      <div className="lr-app-connect-head">
+        {state === "busy" ? <LoadingStatus label="client.connect.discovering" /> :
+          <div className="lr-app-connect-scene" aria-hidden="true">{helpOpen && (state === "ready" ? <HintComic kind="hint-app-ready" /> : state === "approval" || state === "waking" ? <HintComic kind="hint-client-site" /> :
+            <Comic kind={state === "incompatible" ? "warning" : "signal-failed"} theme="paper" />)}</div>}
+        <button type="button" className="lr-btn is-dense is-quiet lr-app-connect-close" aria-label={t("common.close")}
+          popoverTarget={helpId} popoverTargetAction="hide">
+          <Glyph name="x" size={16} />
+        </button>
+      </div>
+      <p id={`${helpId}-message`} className={vis ? "visually-hidden" : undefined}>{state === "busy" ? t("client.connect.permissionHint") : label}</p>
+      {state === "ready" && build && <p className="lr-app-connect-version">
+        <span className={vis ? "visually-hidden" : undefined}>{t("client.launch.version", { version: build.version })}</span>
+        {vis && <span aria-hidden="true">{build.version}</span>}
+      </p>}
+      {update && <AppReleaseNotice update={update} />}
+      <div className="lr-app-connect-actions">
+        {state !== "busy" && <button type="button" className="lr-btn" aria-label={t(state === "approval" || state === "ready" ? "client.connect.open" : state === "waking" ? "client.connect.continue" : "common.retry")} onClick={() => void connect()}>
+          <Glyph name={state === "approval" || state === "ready" ? "arrowRight" : "refresh"} size={16} /><span className={vis ? "visually-hidden" : undefined}>{t(state === "approval" || state === "ready" ? "client.connect.open" : state === "waking" ? "client.connect.continue" : "common.retry")}</span>
+        </button>}
+        {failed && wakeURL && <a className="lr-btn" href={wakeURL} onClick={event => { event.preventDefault(); void connect(true); }}>
+          <Glyph name="window" size={16} /><span className={vis ? "visually-hidden" : undefined}>{t("client.connect.wakeApp")}</span>
+        </a>}
+        {failed && <a className="lr-btn" href={downloadURL} target="_blank" rel="noopener noreferrer" aria-label={t("client.connect.download")}>
+          <Glyph name="arrowDown" size={16} /><span className={vis ? "visually-hidden" : undefined}>{t("client.connect.download")}</span>
+        </a>}
+      </div>
+      {state !== "ready" && <p className={vis ? "visually-hidden" : "lr-app-connect-optional"}>{t("client.connect.browserHint")}</p>}
+    </div>
+  </>;
+}

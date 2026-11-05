@@ -1,0 +1,217 @@
+import type { Fault, NatMode } from "./network";
+import type { MediaSample } from "./page";
+import type { ProbeResult } from "./udp";
+
+export interface Scenario {
+  id: string;
+  host: "browser" | "app";
+  viewer: "browser" | "app";
+  nat: readonly [NatMode, NatMode];
+  fault: Fault;
+  sfu: boolean;
+  sfuOnly?: boolean;
+  expected: "media" | "unavailable" | "observed";
+  enhancedExpected?: "media" | "unavailable";
+  duringShare?: boolean;
+  ipv6?: boolean;
+  faultEndpoint?: 0 | 1;
+  direction?: "uplink" | "downlink";
+  sibling?: boolean;
+  remap?: boolean;
+  qualityRecovery?: boolean;
+  voice?: boolean;
+}
+
+export interface TrialSummary {
+  scenario: Scenario;
+  seed: number;
+  prediction: boolean;
+  passed: boolean;
+  outcome?: "media" | "unavailable" | "timeout";
+  firstPictureMs?: number | null;
+  recoveryMs?: number | null;
+}
+
+export function summarizeTrials(trials: readonly TrialSummary[]) {
+  const groups = new Map<string, TrialSummary[]>();
+  for (const trial of trials) {
+    const key = JSON.stringify([trial.scenario.id, trial.prediction]);
+    const group = groups.get(key) ?? []; group.push(trial); groups.set(key, group);
+  }
+  const distribution = (values: number[]) => {
+    values.sort((a, b) => a - b);
+    return { count: values.length, min: values[0] ?? null, median: values[Math.ceil(values.length / 2) - 1] ?? null,
+      p95: values[Math.ceil(values.length * 0.95) - 1] ?? null, max: values.at(-1) ?? null };
+  };
+  return [...groups.values()].map(group => ({
+    scenario: group[0]!.scenario.id, prediction: group[0]!.prediction, trials: group.length,
+    checksPassed: group.filter(trial => trial.passed).length,
+    failures: group.filter(trial => !trial.passed).length,
+    media: group.filter(trial => trial.passed && trial.outcome === "media").length,
+    unavailable: group.filter(trial => trial.outcome === "unavailable").length,
+    timeouts: group.filter(trial => trial.outcome === "timeout").length,
+    firstPictureMs: distribution(group.flatMap(trial => trial.passed && typeof trial.firstPictureMs === "number" ? [trial.firstPictureMs] : [])),
+    recoveryMs: distribution(group.flatMap(trial => trial.passed && typeof trial.recoveryMs === "number" ? [trial.recoveryMs] : [])),
+  }));
+}
+
+const baseline = { nat: ["preserve", "preserve"], fault: "none", sfu: false, expected: "media" } as const;
+export const scenarios: readonly Scenario[] = [
+  { ...baseline, id: "browser-browser", host: "browser", viewer: "browser" },
+  { ...baseline, id: "app-browser", host: "app", viewer: "browser" },
+  { ...baseline, id: "browser-app", host: "browser", viewer: "app" },
+  { ...baseline, id: "app-app", host: "app", viewer: "app" },
+  ...(["browser", "app"] as const).flatMap(host => (["browser", "app"] as const).map(viewer => ({
+    ...baseline, id: `voice-${host}-${viewer}`, host, viewer, voice: true,
+  }))),
+  { ...baseline, id: "voice-sfu-fallback", host: "browser", viewer: "browser", voice: true, fault: "peer-block", sfu: true },
+  { ...baseline, id: "voice-media-outage", host: "app", viewer: "app", voice: true, fault: "udp-block", duringShare: true },
+  { ...baseline, id: "delayed-browser", host: "browser", viewer: "browser", fault: "delay" },
+  { ...baseline, id: "lossy-browser", host: "browser", viewer: "browser", fault: "loss" },
+  { ...baseline, id: "stun-backup", host: "browser", viewer: "browser", fault: "stun-primary" },
+  { ...baseline, id: "sfu-fallback", host: "browser", viewer: "browser", fault: "peer-block", sfu: true },
+  { ...baseline, id: "sfu-outage", host: "browser", viewer: "browser", fault: "udp-block", sfu: true, sfuOnly: true, duringShare: true },
+  { ...baseline, id: "blocked-media", host: "browser", viewer: "browser", fault: "udp-block", expected: "unavailable" },
+  { ...baseline, id: "bandwidth-recovery", host: "browser", viewer: "browser", fault: "rate", duringShare: true },
+  // Match the same Browser source through direct and SFU paths. A brief return
+  // of decoded frames cannot establish recovery from sustained low quality.
+  ...([
+    { id: "quality-peer", sfu: false, faultEndpoint: 1, direction: "downlink" },
+    { id: "quality-sfu-uplink", sfu: true, sfuOnly: true, faultEndpoint: 0, direction: "uplink" },
+    { id: "quality-sfu-downlink", sfu: true, sfuOnly: true, faultEndpoint: 1, direction: "downlink" },
+  ] as const).map(path => ({ ...baseline, ...path, host: "browser" as const, viewer: "browser" as const,
+    fault: "rate" as const, duringShare: true, qualityRecovery: true })),
+  { ...baseline, id: "media-outage", host: "app", viewer: "app", fault: "udp-block", duringShare: true },
+  { ...baseline, id: "signaling-outage", host: "browser", viewer: "browser", fault: "signaling", duringShare: true },
+  { ...baseline, id: "random-nat", host: "app", viewer: "app", nat: ["random", "random"], expected: "observed" },
+  { ...baseline, id: "asymmetric-nat", host: "browser", viewer: "app", nat: ["random", "preserve"], expected: "observed" },
+  { ...baseline, id: "sequential-app", host: "app", viewer: "app", nat: ["sequential", "sequential"], expected: "observed", enhancedExpected: "media" },
+  { ...baseline, id: "sequential-browser", host: "browser", viewer: "browser", nat: ["sequential", "sequential"], expected: "observed" },
+  { ...baseline, id: "sequential-mixed", host: "app", viewer: "browser", nat: ["sequential", "sequential"], expected: "observed" },
+  { ...baseline, id: "sequential-browser-app", host: "browser", viewer: "app", nat: ["sequential", "sequential"], expected: "observed" },
+  { ...baseline, id: "ipv6-browser", host: "browser", viewer: "browser", ipv6: true, fault: "ipv4-block" },
+  { ...baseline, id: "ipv6-app", host: "app", viewer: "app", ipv6: true, fault: "ipv4-block" },
+  { ...baseline, id: "healthy-sibling", host: "browser", viewer: "browser", sibling: true,
+    fault: "rate", faultEndpoint: 1, direction: "downlink", duringShare: true },
+  { ...baseline, id: "remap-browser", host: "browser", viewer: "browser", fault: "udp-block", duringShare: true, remap: true },
+  { ...baseline, id: "remap-app", host: "app", viewer: "app", fault: "udp-block", duringShare: true, remap: true },
+  // Preserve each direction: Browser capture and Native reception have different
+  // owners from Native capture and Browser reception, even on the same network.
+  ...([
+    { host: "app", viewer: "browser" }, { host: "browser", viewer: "app" }, { host: "app", viewer: "app" },
+  ] as const).flatMap(pair => [
+    { ...baseline, ...pair, id: `stun-backup-${pair.host}-${pair.viewer}`, fault: "stun-primary" as const },
+    { ...baseline, ...pair, id: `signaling-outage-${pair.host}-${pair.viewer}`, fault: "signaling" as const, duringShare: true },
+  ]),
+  ...([{ host: "app", viewer: "browser" }, { host: "browser", viewer: "app" }] as const).flatMap(pair => [
+    { ...baseline, ...pair, id: `ipv6-${pair.host}-${pair.viewer}`, ipv6: true, fault: "ipv4-block" as const },
+    { ...baseline, ...pair, id: `remap-${pair.host}-${pair.viewer}`, fault: "udp-block" as const, duringShare: true, remap: true },
+  ]),
+];
+
+export function selectScenarios(suite: string, names?: string): Scenario[] {
+  if (!["smoke", "full"].includes(suite)) throw new Error("Suite must be smoke or full");
+  if (!names) return suite === "full" ? [...scenarios] : scenarios.slice(0, 4);
+  const requested = names.split(",");
+  if (new Set(requested).size !== requested.length) throw new Error("Duplicate case name");
+  return requested.map(id => {
+    const scenario = scenarios.find(value => value.id === id);
+    if (!scenario) throw new Error(`Unknown case: ${id}`);
+    return scenario;
+  });
+}
+
+export function hasPicture(sample: MediaSample): boolean {
+  return sample.width > 0 && sample.height > 0 && sample.frames >= 15 &&
+    sample.stats.some(row => row.type === "inbound-rtp" && row.kind === "video" &&
+      row.peerId === sample.playbackPeerId && Number(row.framesDecoded) >= 15);
+}
+
+export function checkAppPath(sample: MediaSample, action: "prepare-edge" | "receive-offer", localAddresses: readonly string[]): void {
+  const connected = sample.controls.some((control, index) => control.type === action && control.connectionId &&
+    !sample.controls.slice(index + 1).some(later => later.connectionId === control.connectionId &&
+      ["close-edge", "close-receiver"].includes(later.type)) &&
+    sample.events.findLast(event => event.scope === "app" && event.type === "edge-state" &&
+      event.connectionId === control.connectionId)?.state === "connected");
+  const local = (row: MediaSample["stats"][number]) => localAddresses.includes(String(row.remoteAddress)) ||
+    ["127.0.0.1", "::1", "0:0:0:0:0:0:0:1"].includes(String(row.remoteAddress));
+  const videoPeers = new Set(sample.stats.filter(row => row.kind === "video").map(row => row.peerId));
+  const pairs = sample.stats.filter(row => row.type === "selected-pair" && videoPeers.has(row.peerId));
+  const browserWAN = pairs.some(row => !local(row));
+  const playbackBridge = action !== "receive-offer" || pairs.some(row => row.peerId === sample.playbackPeerId && local(row));
+  if (!sample.controlOpen || !connected || browserWAN || !playbackBridge) {
+    throw new Error(`Missing current App ${action} path; Browser fallback cannot validate Native media`);
+  }
+}
+
+export function checkFaultHit(fault: Fault, faultDrops: number): void {
+  if (["peer-block", "udp-block", "ipv4-block", "stun-primary", "signaling"].includes(fault) && faultDrops < 1) {
+    throw new Error(`No packets hit the ${fault} rule; outcome cannot validate this fault`);
+  }
+}
+
+export function checkContinuity(before: MediaSample, after: MediaSample): void {
+  // Liveness is separate from quality: WebRTC may legitimately reduce cadence
+  // under jitter/loss. Preserve the measured cadence rather than imposing a floor.
+  if (after.frames <= before.frames) throw new Error("Decoded video did not continue");
+  if (before.pictureHash === null || after.pictureHash === null || before.pictureHash === after.pictureHash) {
+    throw new Error("Rendered synthetic picture did not change");
+  }
+  const audible = after.stats.some(row => {
+    if (row.type !== "inbound-rtp" || row.kind !== "audio" || row.peerId !== after.playbackPeerId) return false;
+    const previous = before.stats.find(other => other.id === row.id && other.peerId === row.peerId);
+    return previous && Number(row.totalAudioEnergy) > Number(previous.totalAudioEnergy) &&
+      Number(row.totalSamplesDuration) > Number(previous.totalSamplesDuration);
+  });
+  if (!audible) throw new Error("Decoded audio energy and sample duration did not advance");
+}
+
+// A fixture acceptance check, never a product quality floor. The source is a
+// fixed moving 720p canvas and the restored laboratory link is unconstrained.
+export function checkQualityRecovery(baseline: MediaSample, samples: readonly MediaSample[]): void {
+  if (baseline.width !== 1280 || baseline.height !== 720) throw new Error("Quality baseline never reached the source resolution");
+  const first = samples[0], last = samples.at(-1);
+  if (!first || !last || last.at - first.at < 10_000) throw new Error("Quality recovery needs a sustained ten-second observation");
+  if (samples.some(sample => sample.width !== baseline.width || sample.height !== baseline.height ||
+    sample.playbackPeerId !== baseline.playbackPeerId || sample.route !== baseline.route)) {
+    throw new Error("Source resolution did not recover on the retained connection");
+  }
+  checkContinuity(first, last);
+}
+
+export function checkCalibration(before: ProbeResult, after: ProbeResult, fault: Fault): void {
+  if (before.received !== before.sent || before.mappings.length !== 3 ||
+      before.mappings.some(mapping => !mapping.address.startsWith("198.51.100."))) {
+    throw new Error("Baseline probe did not traverse the expected NAT and all three destinations");
+  }
+  if (fault === "udp-block" || fault === "ipv4-block") {
+    if (after.received !== 0) throw new Error("Blocked UDP still reached the probe");
+  } else if (fault === "delay") {
+    const median = (values: number[]) => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)] ?? 0;
+    // Normal jitter has tails; its minimum is not the configured delay.
+    if (after.received === 0 || median(after.rttMs) - median(before.rttMs) < 65) throw new Error("Configured delay was not observed");
+  } else if (fault === "loss") {
+    if (after.received === 0 || after.received >= after.sent) throw new Error("Configured loss was not observed");
+  } else if (fault === "rate") {
+    if (!(after.sendDurationMs > 0) || after.sent * 1200 * 8000 / after.sendDurationMs < 1_800_000) {
+      throw new Error("Calibration sender did not exceed the configured rate ceiling");
+    }
+    if (after.receivedBytes === 0 || after.receivedBytes * 8000 / after.durationMs > 900_000) {
+      throw new Error("Configured rate ceiling was not observed");
+    }
+  } else if (after.received !== after.sent) throw new Error("Control path unexpectedly lost calibration packets");
+}
+
+export function checkMapping(probe: ProbeResult, mode: NatMode): void {
+  const ports = new Set(probe.mappings.map(value => value.port));
+  if (probe.mappings.length !== 3 || (mode === "preserve" ? ports.size !== 1 : ports.size < 2)) {
+    throw new Error(`Observed mappings do not match the configured ${mode} SNAT behavior`);
+  }
+  if (mode === "sequential") {
+    const ordered = [...ports].sort((a, b) => a - b);
+    if (ordered.length !== 3 || ordered[0]! < 40000 || ordered[2]! >= 44096 ||
+      ordered[1]! !== ordered[0]! + 1 || ordered[2]! !== ordered[1]! + 1) {
+      throw new Error("Sequential SNAT did not allocate consecutive ports across three destinations");
+    }
+  }
+}

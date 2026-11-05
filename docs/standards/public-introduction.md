@@ -1,0 +1,209 @@
+# Public introduction
+
+This file owns the website and README content structure. The
+[visual language](./visual-language.md) owns their shared illustration and motion.
+
+## One story, three readers
+
+Lead with friends sharing something worth seeing: a game, a drawing, a film or
+travel photos. The [copy guide](./naming.md#voice-and-terminology) owns
+Chinese/English voice and role labels. A visitor should
+understand what Piik does, choose an entry and complete the first useful action.
+
+| Surface | Reader's question | Content |
+| --- | --- | --- |
+| README, English and Chinese | What is this, and how do I start? | Brand introduction and interface preview, features, getting started, self-hosting, contribution and license |
+| `site/`, for GitHub Pages | What does using it feel like, and how do I start? | Room illustration and primary download link, illustrated steps, online/App/existing-site walkthroughs, FAQ, platform downloads, self-hosting and documentation |
+| Getting-started guides | Which button or mode do I use? | Browser invitation, sharing, App setup, room creation and Site approval |
+| Self-hosting guides | How do I put my own site online? | Run the binary, set the domain and HTTPS proxy, open ports and verify; service management remains a separate reference |
+| Developer and operations docs | How do I build or host it? | Existing configuration, deployment, architecture and diagnostic owners |
+
+The [reader documentation](../guide/README.md) is the public help entry. Link it from the
+website navigation and footer, with direct self-hosting, configuration and
+update/recovery links in the documentation section. Keep the guides in this
+repository; do not maintain a second GitHub Wiki copy of the same instructions.
+The website build renders the selected guides at `/docs/`, with language navigation
+and local search. The repository's [developer map](../README.md), standards,
+research and work ledgers remain separate from that reader navigation.
+
+Homepage FAQ answers questions before first use: installation, supported
+platforms, audience size, sound and sharing across networks. Order them along
+the visitor's decisions: device and installation requirements, joining friends,
+shared media, then advanced hosting. Keep related questions together and place
+material limitations beside their answers. Specific errors and recovery procedures
+belong in the troubleshooting and network guides, linked from the header,
+FAQ and footer in the selected language. App references link to the relevant
+guide rather than maintaining a second copy.
+Do not duplicate troubleshooting steps on the homepage.
+
+Search titles, descriptions and repository topics describe the actual product:
+private screen sharing, watching together and optional self-hosting. Use natural
+Chinese and English phrases in the relevant introduction; preserve the brand
+line in the visible headline. Follow [Google's title guidance](https://developers.google.com/search/docs/appearance/title-link):
+avoid keyword lists, unrelated product names and unsupported performance claims.
+
+## Reader guidance
+
+Separate first-use tutorials, task instructions, explanations and reference,
+following [Diátaxis](https://diataxis.fr/how-to-guides/). The site and README help
+readers choose an entry; guides supply the steps. Check the rendered result:
+
+- Start with the reader's task or visible symptom. Put prerequisites and the
+  next useful action before optional mechanisms; keep essential safety and
+  success checks beside the action, outside optional disclosures.
+- Give long pages linked section indexes and descriptive headings. Split
+  substantial tasks when the outline becomes hard to scan.
+- Put diagrams or real UI captures beside the step or relationship they explain.
+  Keep necessary text available without the image; remove decorative repetition.
+- Use direct instructions and consistent UI labels. Check entry selection,
+  task completion and the next check on mobile.
+
+Reference guidance:
+[Microsoft's scannable-content and navigation guidance](https://learn.microsoft.com/en-us/style-guide/scannable-content/),
+[Google's large-document course](https://developers.google.com/tech-writing/two/large-docs),
+[W3C's headings and link guidance](https://www.w3.org/WAI/tips/writing/), and
+[Mayer and Fiorella's coherence, signaling and spatial-contiguity principles](https://doi.org/10.1017/9781108894333.019).
+
+## Presentation
+
+Keep three presentation responsibilities distinct:
+
+| Layer | Owns | Review question |
+| --- | --- | --- |
+| Shared identity | Mascot geometry and wink, gold sparkle, wordmark/orange dot, public-page brand control | Does this read as the same Piik at every size and entry? |
+| Product demonstration | Actual components, labels, source selection, room controls and participants with sample data | Does the pictured action still match the current product? |
+| Promotional composition | Original scenery, large typography, framing, transitions and optional music | Does the spectacle help a newcomer understand the product and find the next action? |
+
+Use one public-page brand component for the homepage and film. The mascot's
+curved wink and gold sparkle are recognizable features; a prop or a pictured
+game does not replace its face with another expression. Original RPG scenery
+can suggest exploration through terrain, ruins and small discoveries without
+borrowing another product's characters, named places, logos or artwork.
+
+Homepage sections follow the visitor's decisions: understand Piik and find the
+primary download action, see the sharing steps, choose a short tutorial, resolve
+questions, then find platform downloads, detailed documentation and source.
+The primary download link lets returning visitors skip the tutorials. Guide
+choices run from the online site to App to an existing Piik site, with only the
+online entry expanded initially. The existing-site guide explains connecting the
+App to a site run by the reader or their group, and direct browser use. The App
+tutorial's mode descriptions link to that guide. When using the public site as an example,
+keep its P2P-only limitation beside the explanation of optional SFU fallback.
+Watching requires no installation. Self-hosting belongs in the bottom
+documentation section: mark it as advanced, name its server/domain requirements
+and link its complete guide. The existing-site guide links there for visitors
+who want to run their own site. Explain what App and site each provide; optional SFU
+fallback requires the site to enable it and is not a connectivity guarantee.
+Keep architecture choices beside each platform's download buttons, with one
+centered repository link below the cards. Tutorials remain in their own
+sections. Keep section navigation available on phones rather than hiding the
+only route to documentation.
+The release film must work without seeing an earlier film: establish screen
+sharing and how a friend joins before introducing new ways to interact.
+It can use bolder composition, but must show real operations and concrete
+benefits before its closing action. The [copy guide](./naming.md#voice-and-terminology)
+owns technical disclosure; a dramatic heading does not exempt copy from it.
+
+Review whole Chinese phrases, English meaning and adjacent number labels in
+finished frames, not just the source string. Recheck the smallest viewport and
+both languages when changing a title or its timing. Keep enough still time to
+read it; do not solve overflow by shrinking an important caption beyond legibility.
+
+Use the [shared visual language](./visual-language.md) for cast, objects,
+accessible interaction and motion. This document owns the website's editorial
+layout and introduction, not a separate product-status vocabulary.
+
+Each section needs one reader question, evidence that answers it and a clear
+next action. A scene should demonstrate one action or benefit before changing
+the topic. Keep decorative words and transitions away from control labels and
+the primary action; sound and motion must not carry essential instructions alone.
+Gameplay reactions follow a visible result: establish the action, show its
+success, then celebrate. Keep enough of the play visible to make the reaction
+understandable; a genre label or a score burst does not replace the action.
+
+Use the shared theme's wall colours, clear control edges, a warm orange/yellow
+sofa and the curious TV mascot. The site is a welcoming room, not a monitoring
+dashboard. Keep one
+primary action, native navigation and short instructions. Language and theme
+follow the system unless explicitly changed; unsupported languages use English.
+Respect reduced motion and retain useful content without JavaScript.
+
+The room illustration cycles through four distinct uses: an RPG, drawing,
+travel photos and a movie. Treat coding and design as creative work rather than
+proliferating overlapping examples. The host holds a gamepad during the game;
+the role badge identifies the host independently of the activity.
+Keep participant drawings consistent across the site, READMEs,
+interface captures and tooltip/status comics.
+
+Present Piik as an open-source project: plain explanations, room for tinkering,
+and an invitation to contribute. Keep the friendly illustration and avoid
+company-style pitches, repeated slogans or claims about a support team.
+The short comics illustrate choosing, inviting and joining, following the
+shared motion grammar and whole-control replay rule. The optional film starts
+only after an explicit action and has native buttons and a seek slider. Open it
+within the homepage, loading its single player on demand; closing it unloads
+playback. Keep one homepage playback entry. Fullscreen watching keeps touch
+controls available.
+Both READMEs share the friendly opening and room illustration. Their feature,
+limitation and setup sections use the factual register in the copy guide.
+
+Use a consistent README structure:
+a distinct brand opening, bold headings and key phrases, regular explanatory
+text, quiet captions and optional detail. Use images and short demonstrations
+to explain different things rather than filling space. Keep essential setup and
+availability in readable text, and distinguish generated demo content from a
+real captured workload. GitHub-native Markdown/HTML must remain useful on mobile
+and in both themes without custom CSS.
+
+The product UI remains mascot-only. On the website, keep the header's TV
+mascot before the Piik name. The wordmark and mascot do not transform
+into one another. Match the product's
+playful style through the mascot's wink and short comic interactions. An
+original room illustration is shared by the site and READMEs. Interface previews
+use generated scenes and sample participants. Keep private invitations,
+user identities and personal media out of published assets; no external fonts
+or tracking are needed.
+
+## Small implementation
+
+The website and film initially follow the browser's primary language: Chinese
+uses Chinese copy, and other languages use English. An explicit language choice
+is shared between these two pages and remembered; linked language choices take
+precedence when following a link.
+
+Use static HTML, CSS, SVG and small scripts for the homepage and film; no router,
+CMS, translation dependency or new application backend. The documentation section
+uses VitePress's standard navigation and search with Piik's colours and mascot.
+It compiles existing Markdown; [website operations](../operations/website.md#documentation-build)
+owns its publication list and build boundary. The selected public film A uses
+authored artwork; its pictured interfaces require deliberate updates when the
+product changes. The separate `/film/ui/` README fixture bundles existing React
+product components and styles with staged inputs. It cannot run capture or
+contact the room service. Rebuilding that fixture picks up component/style/copy
+changes; workflow changes still require reviewing its sequence and framing.
+Use real components for current product screenshots; distinguish authored film
+artwork and frozen review snapshots from automatically rebuilt product UI.
+The existing App/Web
+continues to own sharing. The homepage explains it rather than simulating a
+second room authority. Public copies of advanced product/research documents
+are not automatically included in the website artifact.
+
+The [website operations guide](../operations/website.md) owns Pages publication,
+public destinations and the separate P2P-only demo. The primary action leads
+to the platform download section. The website operations guide owns each
+platform's latest download routes and provider labels. The download entry may
+show the current Release's [editorial title and factual explanation](./versioning.md#release-notes),
+read from the same metadata request as its version and date. Keep the full
+release-note link and verify destinations as part of publication. Without that
+metadata, the ordinary download links remain usable.
+Online, App and self-hosting walkthroughs
+use real action names and explain the first sharing and viewing steps. Keep
+platform requirements and connection limitations beside the relevant steps.
+
+## Review boundary
+
+Review desktop/mobile, English/Chinese, light/dark, keyboard navigation,
+reduced motion, no JavaScript and a nested project URL. Check links, accurate
+platform/connection claims and a single copy of each responsibility. Remove
+decorative controls or code that do not improve understanding. This is a public
+introduction overhaul, not an excuse to change configuration or media policy.

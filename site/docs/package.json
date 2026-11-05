@@ -1,0 +1,13 @@
+{
+  "name": "piik-docs",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@vueuse/core": "12.8.2",
+    "vitepress": "1.6.4",
+    "vue": "3.5.42"
+  },
+  "overrides": {
+    "vite": "6.4.3"
+  }
+}

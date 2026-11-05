@@ -1,0 +1,32 @@
+.lr-tv-screen:has(> .lr-chat-overlay) { container-type: inline-size; }
+.lr-chat-overlay { position: absolute; inset: 0; overflow: hidden; pointer-events: none; container-type: size; }
+.lr-tv-screen:has(> .lr-playback) > .lr-chat-overlay { grid-area: 1 / 1 / 2 / 2; }
+.lr-chat-flight {
+  position: absolute; left: 100%; top: calc(12px + var(--chat-lane) * 34px);
+  max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 2px 10px; border-radius: 999px; background: rgb(15 25 35 / .68);
+  color: #fff; font-size: calc(clamp(14px, 2cqw, 18px) * var(--chat-scale, 1)); font-weight: 600; line-height: 28px;
+  text-shadow: 0 1px 2px rgb(0 0 0 / .4);
+  animation: lr-chat-flight linear both;
+}
+/* Preserve the participant hue while keeping text readable over the picture. */
+.lr-chat-flight.is-colored { color: color-mix(in oklch, var(--chat-person-color) 75%, white); }
+@keyframes lr-chat-flight { to { transform: translateX(calc(-100cqw - 100%)); } }
+/* Fixed rows fit the largest supported font without changing shared lanes.
+   Fit complete 32px lines above playback controls. Visibility preserves the
+   running flight when the available picture space changes. */
+@container (height < 112px) { .lr-chat-flight[data-lane="2"] { visibility: hidden; } }
+@container (height < 78px) { .lr-chat-flight[data-lane="1"] { visibility: hidden; } }
+@container (height < 44px) { .lr-chat-flight { visibility: hidden; } }
+.lr-chat-overlay-toggle { display: inline-flex; }
+.lr-chat-overlay-settings { display: grid; gap: 12px; }
+.lr-chat-color-setting { display: flex; align-items: center; gap: 8px; }
+.lr-chat-setting { min-width: 0; }
+.lr-chat-setting > label { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 28px; font-size: 13px; }
+.lr-chat-setting output { color: var(--muted); font: 12px var(--mono); }
+.lr-chat-setting > .lr-comic-tip-wrap { display: flex; width: 100%; }
+.lr-chat-setting input[type="range"] { width: 100%; min-height: 40px; margin: 0; accent-color: var(--action); cursor: pointer; }
+[data-comic-reduced-motion] .lr-chat-flight { animation: none; left: 12px; }
+@media (prefers-reduced-motion: reduce) {
+  .lr-chat-flight { animation: none; left: 12px; }
+}
