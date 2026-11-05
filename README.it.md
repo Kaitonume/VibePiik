@@ -4,7 +4,7 @@
 
 VibePiik è una versione modificata di [Piik](https://github.com/TNTcraftHIM/Piik)
 v2.5.3 (revisione `f2f9d27`) per Windows x64. Aggiunge le funzioni che la
-collegano a **PIIK TV**, un'app per Android TV che riproduce le stanze Piik sul
+collegano a **[PIIK TV](https://github.com/Kaitonume/Piik-TV)**, un'app per Android TV che riproduce le stanze Piik sul
 televisore, e alcune correzioni che rendono più fluida la condivisione a 60 fps.
 
 > VibePiik non è una versione ufficiale di Piik e non è supportata dagli
@@ -75,11 +75,15 @@ televisore, e alcune correzioni che rendono più fluida la condivisione a 60 fps
   che aggiunge file per le stanze grandi e la navigazione da tastiera.
 
 ### Aggiornamenti
+- **Installazione dall'App.** L'avviso (pulsante App, Aiuto, pagina iniziale) apre il
+  changelog; **Installa ora** scarica la versione, ne verifica l'impronta SHA-256,
+  sostituisce i file di VibePiik e la riavvia (una condivisione in corso viene prima
+  fermata). Gli aggiornamenti importanti si aprono da soli una volta.
 - L'App controlla le [versioni di VibePiik](https://github.com/Kaitonume/VibePiik/releases)
   e, quando ne esce una più nuova, lo dice nella pagina iniziale, nell'Aiuto e
   sul pulsante App. Non propone mai le versioni ufficiali di Piik: installarne una
   toglierebbe VibePiik. (Le pagine aperte nel browser mantengono l'avviso di Piik.)
-- Questa è VibePiik **v1.0.0**. Le versioni hanno il tag `vMAJOR.MINOR.PATCH` e
+- Questa è VibePiik **v1.1.0**. Le versioni hanno il tag `vMAJOR.MINOR.PATCH` e
   contengono `VibePiik-windows-amd64.zip`.
 
 ### Niente blocchi di 3 secondi per chi guarda in Wi-Fi (`piik-app.exe`)
@@ -130,7 +134,7 @@ televisore, e alcune correzioni che rendono più fluida la condivisione a 60 fps
 
 ## Scaricare e avviare
 
-1. Scarica `VibePiik-windows-amd64.zip` dalla pagina Releases.
+1. Scarica `VibePiik-windows-amd64.zip` dalla [pagina Releases](https://github.com/Kaitonume/VibePiik/releases).
 2. Estrailo dove vuoi e avvia `piik-app.exe`, esattamente come il pacchetto
    ufficiale di Piik. Non si installa niente. Tieni VibePiik in una cartella sua:
    non mescolare i suoi file con una cartella di Piik ufficiale.

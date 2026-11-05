@@ -38,6 +38,7 @@ type Manager struct {
 }
 
 func NewManager(web WebWindow, onUserClose func()) *Manager {
+	SetUpdateQuit(onUserClose) // an installed update closes this App
 	return &Manager{web: web, onUserClose: onUserClose}
 }
 
@@ -177,6 +178,7 @@ type preferences struct {
 	PreviewNoAutoPause bool    `json:"previewAutoPauseOff,omitempty"`
 	PreviewSharp       bool    `json:"previewSharp,omitempty"` // live full-detail screen preview
 	PreviewFPS         int     `json:"previewFps,omitempty"`   // sharp preview rate: 30 or 60
+	UpdateShown        string  `json:"updateShown,omitempty"`  // important update already shown by itself
 }
 
 func preferencesPath() string {

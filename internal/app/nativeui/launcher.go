@@ -278,6 +278,9 @@ func (l *Launcher) Layout(gtx layout.Context, u *UI) layout.Dimensions {
 		}()
 	}
 
+	notice := appRelease(state.Version, state.Revision, l.invalidate)
+	autoOpenUpdate(notice, false)
+	layoutUpdateModal(gtx, u, notice, false, nil, l.onExternal, l.invalidate)
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions { return l.header(gtx, u, state) }),
 		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {

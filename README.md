@@ -4,7 +4,7 @@
 
 VibePiik is a modified build of [Piik](https://github.com/TNTcraftHIM/Piik) v2.5.3
 (revision `f2f9d27`) for Windows x64. It adds the features that pair it with
-**PIIK TV**, an Android TV app that plays Piik rooms on a television, and fixes
+**[PIIK TV](https://github.com/Kaitonume/Piik-TV)**, an Android TV app that plays Piik rooms on a television, and fixes
 that make 60 fps sharing smoother.
 
 > VibePiik is not an official Piik release and is not supported by the Piik
@@ -71,11 +71,15 @@ that make 60 fps sharing smoother.
   that grows rows for big rooms, and keyboard navigation.
 
 ### Updates
+- **Install from the App.** The update notice (App button, Help, start page) opens
+  the changelog; **Install now** downloads the release, checks its SHA-256, replaces
+  VibePiik's files and restarts it (a running share is stopped first). Important
+  updates open by themselves once.
 - The App checks [VibePiik's own releases](https://github.com/Kaitonume/VibePiik/releases)
   and shows a notice in the start page, in Help and on the App button when a
   newer one is out. It never offers official Piik releases: installing one would
   remove VibePiik. (Pages opened in the browser keep Piik's own notice.)
-- This is VibePiik **v1.0.0**. Releases are tagged `vMAJOR.MINOR.PATCH` and carry
+- This is VibePiik **v1.1.0**. Releases are tagged `vMAJOR.MINOR.PATCH` and carry
   `VibePiik-windows-amd64.zip`.
 
 ### No 3-second freezes on Wi-Fi viewers (`piik-app.exe`)
@@ -122,7 +126,7 @@ that make 60 fps sharing smoother.
 
 ## Download and run
 
-1. Download `VibePiik-windows-amd64.zip` from the Releases page.
+1. Download `VibePiik-windows-amd64.zip` from the [Releases page](https://github.com/Kaitonume/VibePiik/releases).
 2. Extract it anywhere and run `piik-app.exe`, exactly like the official Piik
    package. Nothing is installed. Keep VibePiik in its own folder: do not mix its
    files with an official Piik folder.
@@ -170,6 +174,22 @@ own tests (`internal/piiktv`, `internal/app/launcher/piiktv_test.go`,
 `internal/server/app/piiktv_test.go`, `tests/piiktv.test.ts`) and update the
 quality tests to the new defaults.
 
+## Publishing a release
+
+- Tag `vMAJOR.MINOR.PATCH`, higher than `vibeVersion` in `internal/app/nativeui/release.go`,
+  which must be raised to the same number before building.
+- Attach `VibePiik-windows-amd64.zip` (the App checks it against the SHA-256 GitHub shows).
+
+The apps read the release notes this way:
+
+- `<!-- importance: important -->` anywhere in the notes marks the update as
+  **important** (the line is invisible on GitHub): the update window then opens by
+  itself once. Without it the update is optional (only the button).
+- The changelog shown in the app is the summary line in its language, then the main
+  English text. Summary lines go after a `---` line and start with `**EN**`,
+  `**IT**` or `**中文**`. Sections titled `### Install` and code blocks (checksums)
+  are not shown.
+- Leave the release as a normal release (not draft, not pre-release).
 ## License
 
 MIT, like Piik: see [LICENSE](./LICENSE) (Copyright (c) 2026 TNTcraft and Piik

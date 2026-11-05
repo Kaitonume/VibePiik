@@ -24,6 +24,10 @@ type releaseNotice struct {
 	Version    string
 	URL        string // download (package asset when there is one)
 	ReleaseURL string // release notes
+	Body       string // release notes (Markdown): the changelog
+	Important  bool   // <!-- importance: important --> in the notes
+	Digest     string // SHA-256 of the package (hex), when GitHub gives it
+	Package    bool   // URL is the Windows package itself (it can be installed)
 }
 
 // releaseRepo is the GitHub repository ("owner/name") whose releases VibePiik
@@ -33,7 +37,7 @@ const releaseRepo = "Kaitonume/VibePiik"
 
 // vibeVersion is VibePiik's own release (the App still reports Piik v2.5.3 to
 // rooms and sites). VibePiik releases are tagged vMAJOR.MINOR.PATCH.
-const vibeVersion = "v1.0.0"
+const vibeVersion = "v1.1.0"
 
 var (
 	releaseAPI       = "https://api.github.com/repos/" + releaseRepo + "/releases/latest"
@@ -45,6 +49,7 @@ var (
 var (
 	revisionPattern = regexp.MustCompile(`^[0-9a-f]{40}$`)
 	tagPattern      = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
+	digestPattern   = regexp.MustCompile(`^[0-9a-f]{64}$`)
 	mirrorSource    = regexp.MustCompile(`(?m)^<!-- piik-source: ([0-9a-f]{40}) -->\r?$`)
 )
 
@@ -73,11 +78,18 @@ type releaseAsset struct {
 	State    string `json:"state"`
 	Type     string `json:"type"`
 	Download string `json:"browser_download_url"`
+	Digest   string `json:"digest"` // "sha256:<hex>"
 }
 
 type publishedRelease struct {
 	version, revision, url, releaseURL string
+	body, digest                       string
+	isPackage                          bool
 }
+
+// releaseTestFeed: automated tests serve a fake release from this PC
+// (VIBEPIIK_UPDATE_FEED); its addresses are not GitHub's.
+var releaseTestFeed = false
 
 // packageURL picks this platform's package from the release assets, like
 // packageDownloadURL; otherwise the release page.
@@ -108,7 +120,7 @@ func packageURL(release publishedRelease, assets []releaseAsset, target string, 
 		if mirror {
 			expected = releaseMirror + "/download/" + release.version + "/" + name
 		}
-		ok := len(matches) == 1 && asset.Download == expected
+		ok := len(matches) == 1 && (asset.Download == expected || releaseTestFeed)
 		if mirror {
 			ok = ok && asset.Type == "attach"
 		} else {
@@ -133,11 +145,19 @@ type githubRelease struct {
 }
 
 func parseRelease(r githubRelease, target string) (publishedRelease, bool) {
-	if r.Draft || r.Prerelease || !tagPattern.MatchString(r.Tag) || normalizeVersion(r.Tag) != r.Tag || r.HTML != releasePage+r.Tag {
+	if r.Draft || r.Prerelease || !tagPattern.MatchString(r.Tag) || normalizeVersion(r.Tag) != r.Tag || (r.HTML != releasePage+r.Tag && !releaseTestFeed) {
 		return publishedRelease{}, false
 	}
-	release := publishedRelease{version: r.Tag, revision: normalizeRevision(r.Commitish), url: releasePage + r.Tag, releaseURL: releasePage + r.Tag}
+	release := publishedRelease{version: r.Tag, revision: normalizeRevision(r.Commitish), url: releasePage + r.Tag, releaseURL: releasePage + r.Tag, body: r.Body}
 	release.url = packageURL(release, r.Assets, target, false)
+	for _, asset := range r.Assets {
+		if asset.Download == release.url && strings.HasSuffix(asset.Name, ".zip") {
+			release.isPackage = true
+			if digest := strings.ToLower(strings.TrimPrefix(asset.Digest, "sha256:")); digestPattern.MatchString(digest) {
+				release.digest = digest
+			}
+		}
+	}
 	return release, true
 }
 
@@ -161,7 +181,8 @@ func parseMirrorRelease(r githubRelease, target string) (publishedRelease, bool)
 // noticeFor is releaseUpdateNotice.
 func noticeFor(version, revision string, latest publishedRelease) *releaseNotice {
 	notice := func(kind string) *releaseNotice {
-		return &releaseNotice{Kind: kind, Version: latest.version, URL: latest.url, ReleaseURL: latest.releaseURL}
+		return &releaseNotice{Kind: kind, Version: latest.version, URL: latest.url, ReleaseURL: latest.releaseURL,
+			Body: latest.body, Important: releaseImportant(latest.body), Digest: latest.digest, Package: latest.isPackage}
 	}
 	version, revision = normalizeVersion(version), normalizeRevision(revision)
 	if version != "" {
@@ -294,10 +315,14 @@ func (v *releaseView) Layout(gtx layout.Context, u *UI, notice *releaseNotice, o
 	if notice == nil {
 		return layout.Dimensions{}
 	}
-	if open != nil {
-		if v.download.Clicked(gtx) {
+	if v.download.Clicked(gtx) {
+		if notice.Package {
+			openUpdateModal() // changelog, then install and restart
+		} else if open != nil {
 			go open(notice.URL)
 		}
+	}
+	if open != nil {
 		if v.mirror.Clicked(gtx) {
 			go open(releaseMirror)
 		}
@@ -310,6 +335,9 @@ func (v *releaseView) Layout(gtx layout.Context, u *UI, notice *releaseNotice, o
 	caption := label
 	if major || notice.Kind == "update-available" {
 		caption = u.T("client.update.download", "version", notice.Version)
+		if notice.Package {
+			caption = u.T("native.update.button", "version", notice.Version)
+		}
 	}
 	icon, tip := "arrowUp", label
 	if major {
@@ -328,7 +356,11 @@ func (v *releaseView) Layout(gtx layout.Context, u *UI, notice *releaseNotice, o
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					return v.download.Layout(gtx, u, ButtonStyle{Comic: "update-available", Icon: icon, Caption: caption, Size: sizeCompact, Tip: tip})
+					tone := toneDefault
+					if notice.Important {
+						tone = tonePrimary
+					}
+					return v.download.Layout(gtx, u, ButtonStyle{Comic: "update-available", Icon: icon, Caption: caption, Size: sizeCompact, Tip: tip, Tone: tone})
 				}),
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					if !hasMirror {

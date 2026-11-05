@@ -74,6 +74,8 @@ type Options struct {
 }
 
 func Run(ctx context.Context, options Options) (returnedErr error) {
+	// After an update: wait for the previous App to quit, remove its old files.
+	nativeui.FinishUpdate()
 	ctx, cancel := context.WithCancel(ctx)
 	options.Debug = options.Debug || debugEnabled(os.Getenv("PIIK_DEBUG"))
 	// Closing the VibePiik window quits the App, like q in the console; [o]

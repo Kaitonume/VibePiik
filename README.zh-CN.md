@@ -3,7 +3,7 @@
 <p align="center"><a href="./README.md">English</a> · <a href="./README.it.md">Italiano</a> · 简体中文</p>
 
 VibePiik 是基于 [Piik](https://github.com/TNTcraftHIM/Piik) v2.5.3（修订版 `f2f9d27`）的
-Windows x64 修改版。它增加了与 **PIIK TV**（一款在电视上播放 Piik 房间的 Android TV 应用）
+Windows x64 修改版。它增加了与 **[PIIK TV](https://github.com/Kaitonume/Piik-TV)**（一款在电视上播放 Piik 房间的 Android TV 应用）
 配合使用的功能，并修复了若干问题，让 60 fps 分享更加流畅。
 
 > VibePiik 不是 Piik 官方版本，也不受 Piik 开发者支持。VibePiik 的问题请在这里反馈，
@@ -48,10 +48,12 @@ Windows x64 修改版。它增加了与 **PIIK TV**（一款在电视上播放 P
 - Piik 的动画漫画、标题框和俏皮的等待文案，大房间会自动加排的沙发，以及键盘导航。
 
 ### 更新
+- **在 App 内安装。** 更新提示（App 按钮、帮助、首页）会打开更新日志；**立即安装** 会下载新版本、
+  校验 SHA-256、替换 VibePiik 的文件并自动重启（正在进行的共享会先停止）。重要更新会自动弹出一次。
 - App 会检查 [VibePiik 自己的发布版本](https://github.com/Kaitonume/VibePiik/releases)，
   有新版本时会在首页、帮助和 App 按钮上提示。App 从不推荐 Piik 官方版本：安装官方版本会移除 VibePiik。
   （在浏览器中打开的页面仍保留 Piik 自己的提示。）
-- 当前为 VibePiik **v1.0.0**。发布版本的标签格式为 `vMAJOR.MINOR.PATCH`，附带
+- 当前为 VibePiik **v1.1.0**。发布版本的标签格式为 `vMAJOR.MINOR.PATCH`，附带
   `VibePiik-windows-amd64.zip`。
 
 ### Wi-Fi 观众不再卡顿 3 秒（`piik-app.exe`）
@@ -85,7 +87,7 @@ Windows x64 修改版。它增加了与 **PIIK TV**（一款在电视上播放 P
 
 ## 下载和运行
 
-1. 从 Releases 页面下载 `VibePiik-windows-amd64.zip`。
+1. 从 [Releases 页面](https://github.com/Kaitonume/VibePiik/releases) 下载 `VibePiik-windows-amd64.zip`。
 2. 解压到任意位置，运行 `piik-app.exe`，与 Piik 官方程序包完全相同，无须安装。请把 VibePiik
    放在单独的文件夹中，不要与 Piik 官方文件夹的文件混在一起。
 

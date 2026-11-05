@@ -534,9 +534,20 @@ func (r *Room) Layout(gtx layout.Context, u *UI) layout.Dimensions {
 	if r.theme.Clicked(gtx) && r.onTheme != nil {
 		r.onTheme()
 	}
-	if r.help.Clicked(gtx) || r.appBtn.Clicked(gtx) || r.chinHelp.Clicked(gtx) {
+	notice := appRelease("", "", r.invalidate)
+	if r.appBtn.Clicked(gtx) {
+		if notice != nil && notice.Package {
+			openUpdateModal() // the App button with an update opens it (re-clickable)
+		} else {
+			r.helpPanel.open = !r.helpPanel.open
+		}
+	}
+	if r.help.Clicked(gtx) || r.chinHelp.Clicked(gtx) {
 		r.helpPanel.open = !r.helpPanel.open
 	}
+	sharing := snap.Phase == phaseLive || snap.Phase == phasePaused || snap.Phase == phaseStarting
+	autoOpenUpdate(notice, sharing)
+	layoutUpdateModal(gtx, u, notice, sharing, r.host.EndShare, r.onExternal, r.invalidate)
 	if false && r.onHelp != nil {
 		r.onHelp()
 	}
@@ -593,7 +604,7 @@ func (r *Room) placePreview(gtx layout.Context, snap roomSnapshot, headerH int) 
 		r.preview.SetFit(r.fit)
 	}
 	// The live picture is drawn by Windows above the page: hide it under a question.
-	if !live || r.list.Position.First != 0 || r.previewPaused() || r.browser != nil {
+	if !live || r.list.Position.First != 0 || r.previewPaused() || r.browser != nil || updateModal.open {
 		r.preview.Hide()
 		return
 	}
