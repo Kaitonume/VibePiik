@@ -71,9 +71,12 @@ that make 60 fps sharing smoother.
   that grows rows for big rooms, and keyboard navigation.
 
 ### Updates
-- The App never offers official Piik releases: installing one would remove
-  VibePiik. Its update notice stays off until it can point to VibePiik's own
-  releases. (Pages opened in the browser keep Piik's own notice.)
+- The App checks [VibePiik's own releases](https://github.com/Kaitonume/VibePiik/releases)
+  and shows a notice in the start page, in Help and on the App button when a
+  newer one is out. It never offers official Piik releases: installing one would
+  remove VibePiik. (Pages opened in the browser keep Piik's own notice.)
+- This is VibePiik **v1.0.0**. Releases are tagged `vMAJOR.MINOR.PATCH` and carry
+  `VibePiik-windows-amd64.zip`.
 
 ### No 3-second freezes on Wi-Fi viewers (`piik-app.exe`)
 - AMD hardware encoders put an SVC *prefix NAL unit* (type 14) before every

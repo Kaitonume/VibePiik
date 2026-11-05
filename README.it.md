@@ -75,10 +75,12 @@ televisore, e alcune correzioni che rendono più fluida la condivisione a 60 fps
   che aggiunge file per le stanze grandi e la navigazione da tastiera.
 
 ### Aggiornamenti
-- L'App non propone mai le versioni ufficiali di Piik: installarne una
-  toglierebbe VibePiik. L'avviso di aggiornamento resta spento finché non potrà
-  puntare alle versioni di VibePiik. (Le pagine aperte nel browser mantengono
-  l'avviso di Piik.)
+- L'App controlla le [versioni di VibePiik](https://github.com/Kaitonume/VibePiik/releases)
+  e, quando ne esce una più nuova, lo dice nella pagina iniziale, nell'Aiuto e
+  sul pulsante App. Non propone mai le versioni ufficiali di Piik: installarne una
+  toglierebbe VibePiik. (Le pagine aperte nel browser mantengono l'avviso di Piik.)
+- Questa è VibePiik **v1.0.0**. Le versioni hanno il tag `vMAJOR.MINOR.PATCH` e
+  contengono `VibePiik-windows-amd64.zip`.
 
 ### Niente blocchi di 3 secondi per chi guarda in Wi-Fi (`piik-app.exe`)
 - Gli encoder hardware AMD mettono un'unità SVC *prefix NAL* (tipo 14) prima di

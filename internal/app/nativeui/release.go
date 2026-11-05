@@ -29,7 +29,11 @@ type releaseNotice struct {
 // releaseRepo is the GitHub repository ("owner/name") whose releases VibePiik
 // checks. Empty: no check. It must never be the official Piik repository:
 // updating to an official build would drop every VibePiik feature.
-const releaseRepo = ""
+const releaseRepo = "Kaitonume/VibePiik"
+
+// vibeVersion is VibePiik's own release (the App still reports Piik v2.5.3 to
+// rooms and sites). VibePiik releases are tagged vMAJOR.MINOR.PATCH.
+const vibeVersion = "v1.0.0"
 
 var (
 	releaseAPI       = "https://api.github.com/repos/" + releaseRepo + "/releases/latest"
@@ -85,7 +89,7 @@ func packageURL(release publishedRelease, assets []releaseAsset, target string, 
 	if target == "android-universal" {
 		extension = "apk"
 	}
-	names := []string{"piik-app-" + target + "." + extension}
+	names := []string{"VibePiik-" + target + "." + extension, "piik-app-" + target + "." + extension}
 	if release.revision != "" && extension == "zip" {
 		names = append(names, "piik-app-"+target+"-"+release.revision[:7]+".zip")
 	}
@@ -252,9 +256,9 @@ var releaseCheck struct {
 // appRelease returns the known notice and starts the check when needed;
 // done is called once a new answer is in.
 func appRelease(version, revision string, done func()) *releaseNotice {
-	if version == "" {
-		version, revision = buildinfo.Version(), buildinfo.Revision
-	}
+	// VibePiik compares its own version with its own releases; the Piik
+	// version and revision it is built from do not take part.
+	version, revision = vibeVersion, ""
 	key := version + "|" + revision
 	releaseCheck.Lock()
 	defer releaseCheck.Unlock()
@@ -366,4 +370,19 @@ var releaseLabels = map[string]string{
 	"major-update":     "client.update.major",
 	"different-build":  "client.update.differentBuild",
 	"official-release": "client.update.official",
+}
+
+func init() {
+	nativeCopy_en["client.update.available"] = "A newer VibePiik release is available"
+	nativeCopy_en["client.update.major"] = "New major VibePiik release"
+	nativeCopy_en["client.update.differentBuild"] = "This build differs from the VibePiik release"
+	nativeCopy_en["client.update.official"] = "A VibePiik release is available"
+	nativeCopy_zh["client.update.available"] = "发现新的 VibePiik 版本"
+	nativeCopy_zh["client.update.major"] = "发现新的 VibePiik 大版本"
+	nativeCopy_zh["client.update.differentBuild"] = "当前构建与 VibePiik 发行版不同"
+	nativeCopy_zh["client.update.official"] = "可获取 VibePiik 发行版"
+	nativeCopy_it["client.update.available"] = "È disponibile una nuova versione di VibePiik"
+	nativeCopy_it["client.update.major"] = "Nuova versione principale di VibePiik"
+	nativeCopy_it["client.update.differentBuild"] = "Questa build è diversa dalla versione di VibePiik"
+	nativeCopy_it["client.update.official"] = "È disponibile una versione di VibePiik"
 }

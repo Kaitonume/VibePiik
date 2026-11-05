@@ -1571,7 +1571,7 @@ func (r *Room) helpContent(gtx layout.Context, u *UI, snap roomSnapshot) layout.
 		showInFolder(s.reportPath)
 	}
 	if s.copy.Clicked(gtx) {
-		details := fmt.Sprintf("%s\n%s\nVibePiik (Piik App %s, native UI)", noticeText(u, snap.Notice), snap.FailureCode, version)
+		details := fmt.Sprintf("%s\n%s\nVibePiik %s (Piik App %s, native UI)", noticeText(u, snap.Notice), snap.FailureCode, vibeVersion, version)
 		gtx.Execute(clipboardWrite(details))
 		s.copied = gtx.Now
 	}
@@ -1586,7 +1586,7 @@ func (r *Room) helpContent(gtx layout.Context, u *UI, snap roomSnapshot) layout.
 						return u.label(gtx, "VibePiik", textStyle{size: 14, weight: font.Bold, color: p.Ink})
 					}),
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-						return u.label(gtx, "Piik App "+version, textStyle{size: 11, mono: true, color: p.Muted})
+						return u.label(gtx, vibeVersion+" · Piik "+version, textStyle{size: 11, mono: true, color: p.Muted})
 					}))
 			}),
 			layout.Rigid(layout.Spacer{Height: unit.Dp(14)}.Layout),

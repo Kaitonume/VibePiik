@@ -103,7 +103,7 @@ func saveReport(host map[string]any, lang string) (string, error) {
 	report := map[string]any{
 		"report":    "vibepiik-native-diagnostics",
 		"createdAt": time.Now().Format(time.RFC3339),
-		"app":       map[string]any{"version": buildinfo.Version(), "ui": "native", "os": runtime.GOOS, "arch": runtime.GOARCH, "go": runtime.Version()},
+		"app":       map[string]any{"version": buildinfo.Version(), "vibePiik": vibeVersion, "ui": "native", "os": runtime.GOOS, "arch": runtime.GOARCH, "go": runtime.Version()},
 		"language":  lang,
 		"host":      host,
 	}

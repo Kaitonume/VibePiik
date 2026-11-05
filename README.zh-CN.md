@@ -48,8 +48,11 @@ Windows x64 修改版。它增加了与 **PIIK TV**（一款在电视上播放 P
 - Piik 的动画漫画、标题框和俏皮的等待文案，大房间会自动加排的沙发，以及键盘导航。
 
 ### 更新
-- App 从不推荐 Piik 官方版本：安装官方版本会移除 VibePiik。在能够指向 VibePiik 自己的发布页之前，
-  更新提示保持关闭。（在浏览器中打开的页面仍保留 Piik 自己的提示。）
+- App 会检查 [VibePiik 自己的发布版本](https://github.com/Kaitonume/VibePiik/releases)，
+  有新版本时会在首页、帮助和 App 按钮上提示。App 从不推荐 Piik 官方版本：安装官方版本会移除 VibePiik。
+  （在浏览器中打开的页面仍保留 Piik 自己的提示。）
+- 当前为 VibePiik **v1.0.0**。发布版本的标签格式为 `vMAJOR.MINOR.PATCH`，附带
+  `VibePiik-windows-amd64.zip`。
 
 ### Wi-Fi 观众不再卡顿 3 秒（`piik-app.exe`）
 - AMD 硬件编码器会在每个切片前放一个 SVC *前缀 NAL 单元*（类型 14）。AVC 解码器会忽略它，但它原先在
@@ -88,7 +91,7 @@ Windows x64 修改版。它增加了与 **PIIK TV**（一款在电视上播放 P
 
 文件没有代码签名（Piik 官方文件也没有），所以首次运行时 Windows SmartScreen 可能会要求确认。
 
-其他功能与 Piik 相同：见下方的[原版 README](#about-piik) 和 [Piik 文档中心](https://piik.tv/docs/zh/)。
+其他功能与 Piik 相同：见下方的[原版 README](#关于-piik) 和 [Piik 文档中心](https://piik.tv/docs/zh/)。
 
 ## 兼容性
 

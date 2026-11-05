@@ -2,7 +2,6 @@ package nativeui
 
 import (
 	"context"
-	"github.com/TNTcraftHIM/Piik/internal/app/buildinfo"
 	"image"
 	"io"
 	"math/rand/v2"
@@ -686,7 +685,7 @@ func (r *Room) header(gtx layout.Context, u *UI, snap roomSnapshot) layout.Dimen
 							icon, tip, comic := "check", u.T("client.connect.manage"), "hint-app-ready"
 							if notice := appRelease("", "", r.invalidate); notice != nil && (notice.Kind == "update-available" || notice.Kind == "major-update") {
 								icon, comic = "arrowUp", "update-available"
-								tip = u.T("client.connect.update", "current", buildinfo.Version(), "version", notice.Version)
+								tip = u.T("client.connect.update", "current", vibeVersion, "version", notice.Version)
 							}
 							return r.appBtn.Layout(gtx, u, ButtonStyle{Comic: comic, Icon: icon, Caption: short("App"), Size: sizeCompact, Tip: tip})
 						}),

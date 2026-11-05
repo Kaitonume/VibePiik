@@ -260,7 +260,7 @@ func (l *Launcher) Layout(gtx layout.Context, u *UI) layout.Dimensions {
 		l.addSiteNow()
 	}
 	if l.github.Clicked(gtx) && l.onExternal != nil {
-		go l.onExternal("https://github.com/TNTcraftHIM/Piik")
+		go l.onExternal(projectPage())
 	}
 	if l.loadRetry.Clicked(gtx) {
 		go l.reload()
@@ -917,7 +917,7 @@ func (l *Launcher) footer(gtx layout.Context, u *UI, state LauncherState) layout
 					if version == "" {
 						version = buildinfo.Version()
 					}
-					return u.label(gtx, u.T("client.launch.version", "version", version)+" · VibePiik",
+					return u.label(gtx, "VibePiik "+vibeVersion+" · Piik "+version,
 						textStyle{size: 11.5, color: p.Muted, align: text.End})
 				}))
 		})
